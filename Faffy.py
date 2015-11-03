@@ -42,6 +42,19 @@ class Main():
         self.video = {}
         self.ytype = "NONE"
         self.UI()
+
+    def title(self, text):
+        if sys.platform == "linux":
+            sys.stdout.write("\x1b]2;{0}\x07".format(text))
+        else:
+            os.system("title {0}".format(text))
+
+    def clear(self, override=False):
+        if not self.conf.data[0]["debug"] or override:
+            if sys.platform == "linux":
+                os.system("clear")
+            else:
+                os.system("cls")
         
     def legalize(self, x):
         # *NEW* Easy How To Install Brutal Doom V19 With Extras 11/05/13
@@ -66,6 +79,18 @@ class Main():
         else:
             return self.conf.data[0]['limit'][-1]+1
 
+    def formatLocation(self):
+        x = self.conf.data[0]["dlloc"]
+        if x[-1] == "/":
+            return x
+        elif x[-1] == "\\":
+            return x
+        else:
+            if sys.platform == "linux":
+                return x+"/"
+            else:
+                return x+"\\"
+
     def download(self):
         #print(self.ytype)
         if self.ytype == "PLIST":
@@ -83,22 +108,22 @@ class Main():
                 print("=================================================================")
                 print("Downloading video "+str(x)+" of "+str(len(self.playlist["items"])))
                 print(best.title)
-                print(self.conf.data[0]["dlloc"]+self.legalize(self.playlist["title"])+"/"+self.numberedFilename(x, filename))
+                print(self.formatLocation()+self.legalize(self.playlist["title"])+"/"+self.numberedFilename(x, filename))
                 print("=================================================================")
 
                 try:
-                    os.mkdir(self.conf.data[0]["dlloc"])
+                    os.mkdir(self.formatLocation())
                 except:
                     pass
 
                 try:
-                    os.mkdir(self.conf.data[0]["dlloc"]+self.legalize(self.playlist["title"]))
+                    os.mkdir(self.formatLocation()+self.legalize(self.playlist["title"]))
                 except:
                     pass
 
                 while 2>1:
                     try:
-                        dl = Downloader(url=best.url, loc=self.conf.data[0]["dlloc"]+self.legalize(self.playlist["title"]), 
+                        dl = Downloader(url=best.url, loc=self.formatLocation()+self.legalize(self.playlist["title"]), 
                             name=self.numberedFilename(x, filename), autoresume=True, maxretry=self.conf.data[0]['maxRT'], 
                             verbose=self.conf.data[0]['debug'])
                         dl.download(report)
@@ -116,17 +141,17 @@ class Main():
             filename = self.legalize(best.title+"-"+self.video.author)+ "." + best.extension
 
             try:
-                os.mkdir(self.conf.data[0]["dlloc"])
+                os.mkdir(self.formatLocation())
             except:
                 pass
 
             print("=================================================================")
             print(best.title)
             print("-----------------------------------------------------------------")
-            print(self.conf.data[0]["dlloc"]+filename)
+            print(self.formatLocation()+filename)
             print("=================================================================")
 
-            dl = Downloader(url=best.url, loc=self.conf.data[0]["dlloc"], 
+            dl = Downloader(url=best.url, loc=self.formatLocation(), 
                 name=filename, autoresume=True, maxretry=self.conf.data[0]['maxRT'], 
                 verbose=self.conf.data[0]['debug'])
             dl.download(report)
@@ -138,6 +163,7 @@ class Main():
 
         else:
             raise TypeError("Expected: \"VIDEO\", \"PLIST\", or \"NONE\"  for ytype value. Received:",self.ytype)
+
     def parseUrl(self):
         try:
             self.playlist = pafy.get_playlist(self.url)
@@ -183,11 +209,12 @@ class Main():
         except OSError:
             print("I didn't understand that :C")
             self.ytype = "NONE"
+
     def UI(self):
         while 1:
             if not self.conf.data[0]["debug"]:
-                os.system("clear")
-            os.system('title Faffy Video Downloader: ver: '+ self.conf.data[0]["ver"])
+                self.clear()
+            self.title('Faffy Video Downloader: ver: '+ self.conf.data[0]["ver"])
             print("============================================================")
             print(" Faffy Video Downloader                                "+self.conf.data[0]["ver"])
             print("============================================================")
@@ -196,7 +223,9 @@ class Main():
             if opt == "--help":
                 self.help()
             elif opt == "-q":
-                os.system('clear')
+                self.clear()
+                print("Just got: {0}".format(self.url))
+                self.conf.save()
                 sys.exit()
             elif opt == "--conf":
                 self.conf.showUI()
@@ -207,6 +236,7 @@ class Main():
                     if self.ytype == "PLIST":
                         print("playlists can take a long time to download. Please be patient...")
                     self.download()
+
     def help(self):
         print("================================================================")
         print("HOW TO DOWNLOAD!")
@@ -216,7 +246,7 @@ class Main():
         print("or the prefered file type or resolution by typing '--configure'")
         print("on the main screen")
         print("To download only the audio track from a video, from the main")
-        print("screen type '--configure' to bring up the configuration screen.")
+        print("screen type '--conf' to bring up the configuration screen.")
         print("then choose the option 'Save audio only' and enable it")
         print("================================================================")
         print("--help      : Displays this help screen...")

@@ -25,8 +25,17 @@ class Config:
 		self.data    = []
 
 	def save(self):
-		with open(self.default[0]["file"], 'w') as file:
-			json.dump(self.data, file)
+		try:
+			exclude = [[0,"limit"]]
+			for i in exclude:
+				self.data[i[0]][i[1]] = self.default[i[0]][i[1]]
+
+			with open(self.default[0]["file"], 'w') as file:
+				json.dump(self.data, file)
+
+		except Exception as e:
+			print(e)
+			sys.exit()
 
 	def load(self):
 		try:
@@ -105,7 +114,7 @@ class Config:
 				os.system("clear")
 				print("============================================================")
 				print('\"'+opt+'\"', 'is not one of your options...')
-		self.save()
+		#self.save()
 
 	def set_pl_bound(self):
 		while 1:
