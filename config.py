@@ -26,6 +26,7 @@ class Config:
 
 	def save(self):
 		try:
+                # EXCLUDE Values need: config set index, key of excluded value in config set
 			exclude = [[0,"limit"]]
 			for i in exclude:
 				self.data[i[0]][i[1]] = self.default[i[0]][i[1]]
