@@ -16,14 +16,15 @@ LEGEND:
 
 0 Video Objects with a download method
 - audio track only option
-- Threading (More than one playlist at a time)
-- Threading (More than one Video in a playlist at the same time)
-- Pretty TkInterface
+0 Threading (More than one playlist at a time)
+0 Threading (More than one Video in a playlist at the same time)
+- Pretty Qt Interface
 - pause and resume downloads or even remove videos from the Q
-- automatically ask about ^ when a playlist is longer than 20 videos even if not on manual but add a "Do not ask me this again!" Option
+0 automatically ask about ^ when a playlist is longer than 20 videos even if not on manual but add a "Do not ask me this again!" Option
 0 if enough time passes in a download, it will freeze. Set a timeout and impliment resumable download to fix this
-- legalize does not filter commas, make it filter commas...
+X legalize does not filter commas, make it filter commas...
 - Program crashes if its download folder has been deleted or moved without rerouting the configuration
+- When configuring the download directory; if the program needs to create the directory, then it returns the current_dir+specified_dir
 - Maybe add configuration to control playlist video numbering, and whether or not to put playlists in there own folders
 X If the path is not supplied correctly in the configuration, eg: "C:/Test/foobar" <-- no slash on the end, the downloader will place the file in the wrong location and misname the file
 X Define a funcition to validate path format to prevent the filename and the path from being read incorrectly
@@ -212,8 +213,7 @@ class Main():
 
     def UI(self):
         while 1:
-            if not self.conf.data[0]["debug"]:
-                self.clear()
+            self.clear()
             self.title('Faffy Video Downloader: ver: '+ self.conf.data[0]["ver"])
             print("============================================================")
             print(" Faffy Video Downloader                                "+self.conf.data[0]["ver"])
