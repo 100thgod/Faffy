@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
 #import tkinter
-import pafy, sys, os, shutil, logger
+import pafy, sys, os, shutil, logger, argparse
 import urllib.request as urllib
 #from tkinter     import *
 #from tkinter.ttk import *
@@ -25,7 +25,7 @@ LEGEND:
 X legalize does not filter commas, make it filter commas...
 - Program crashes if its download folder has been deleted or moved without rerouting the configuration
 - When configuring the download directory; if the program needs to create the directory, then it returns the current_dir+specified_dir
-- Maybe add configuration to control playlist video numbering, and whether or not to put playlists in there own folders
+X Maybe add configuration to control playlist video numbering, and whether or not to put playlists in there own folders
 X If the path is not supplied correctly in the configuration, eg: "C:/Test/foobar" <-- no slash on the end, the downloader will place the file in the wrong location and misname the file
 X Define a funcition to validate path format to prevent the filename and the path from being read incorrectly
 '''
@@ -42,7 +42,7 @@ class Main():
         self.playlist = {}
         self.video = {}
         self.ytype = "NONE"
-        self.UI()
+        self.preProcess()
 
     def title(self, text):
         if sys.platform == "linux":
@@ -236,6 +236,22 @@ class Main():
                     if self.ytype == "PLIST":
                         print("playlists can take a long time to download. Please be patient...")
                     self.download()
+
+    def preProcess(self):
+        # Parse system arguments to decide which course of action to take
+        parser = argparse.ArgumentParser()
+
+        parser.add_argument("-u", "--url", help="Youtube URL to download video from. \n \
+                Passing this argument will cause the program to exit the the terminal\n \
+                when the task is completed", action="store")
+
+        args = parser.parse_args()
+
+        # Make decisions based on args
+        if args.url:
+            pass
+        else:
+            self.UI()
 
     def help(self):
         print("================================================================")
