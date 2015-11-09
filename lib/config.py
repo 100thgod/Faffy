@@ -1,4 +1,5 @@
-import os, sys, json, logger
+import os, sys, json
+import lib.logger as logger
 #from tkinter      import *
 #from tkinter.ttk  import *
 #from tkinter.filedialog import *

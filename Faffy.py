@@ -1,12 +1,10 @@
 #! /usr/bin/python3
 
-#import tkinter
-import pafy, sys, os, shutil, logger, argparse
+import pafy, sys, os, shutil, argparse
 import urllib.request as urllib
-#from tkinter     import *
-#from tkinter.ttk import *
-from config      import Config
-from dllib       import *
+import lib.logger as logger
+from lib.config      import Config
+from lib.dllib       import *
 
 '''
 LEGEND:
