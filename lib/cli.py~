@@ -1,0 +1,18 @@
+import argparse
+# Parse system arguments to decide which course of action to take
+parser = argparse.ArgumentParser()
+
+### ARGUMENTS ###
+# Add or remove commandline arguments here
+parser.add_argument("-u", "--url", help="Youtube URL to download video from. \n \
+                Passing this argument will cause the program to exit the the terminal\n \
+                when the task is completed", action="store")
+### END ARGUMENTS ###
+args = parser.parse_args()
+
+def preProcess(self):
+        # Make decisions based on args
+        if args.url:
+            self.preDownload(args.url)
+        else:
+            self.UI()

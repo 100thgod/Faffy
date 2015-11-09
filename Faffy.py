@@ -3,8 +3,9 @@
 import pafy, sys, os, shutil, argparse
 import urllib.request as urllib
 import lib.logger as logger
-from lib.config      import Config
-from lib.dllib       import *
+from lib.config import Config
+from lib.dllib  import *
+from lib.cli    import *
 
 '''
 LEGEND:
@@ -165,13 +166,18 @@ class Main():
 
     def parseUrl(self):
         try:
+            # try to declare the url as a playlist
             self.playlist = pafy.get_playlist(self.url)
+            # assuming the declaration did not fail with ValueError proceed to parse further
             print(self.playlist["title"])
-            os.system("title "+self.playlist["title"])
+            self.title(self.playlist["title"])
             try:
+                # check to see if the url of the playlist ALSO contains a video
                 self.video = pafy.new(self.url)
+                # assuming the declaration did not fail with some error proceed to ask user what course of action should be taken
                 valid = False
                 while not valid:
+                    # Make user decide the best course of action
                     print("Download the whole playlist or just this video?")
                     print(" 1.) The whole playlist from the begining.")
                     print(" 2.) Select where to start and where to end.")
@@ -179,18 +185,22 @@ class Main():
                     print("=================================================================")
                     opt = input("Enter 1, 2, or 3: ")
                     if opt == "1":
+                        # Classify url as a playlist and set the limits to beggining and end
                         self.ytype = "PLIST"
                         self.conf.data["limit"][0] == 1
                         self.conf.data["limit"][1] == -1
                         valid = True
                     elif opt == "2":
+                        # Classify url as a playlist and make the user choose the limits manually
                         self.conf.set_pl_bound()
                         self.ytype = "PLIST"
                         valid = True
                     elif opt == "3":
+                        # Classify the url as a video
                         self.ytype = "VIDEO"
                         valid = True
                     else:
+                        # Make the user pick again and explain that they didnt choose from the available options
                         print("I didn't understand that :C")
                         valid = False
             except Exception as e:
@@ -198,14 +208,18 @@ class Main():
                 
         except ValueError:
             try:
+                # Assuming the url is not a playlist, declare the url as a video, and classify it as such
                 self.video = pafy.new(self.url)
                 #print(self.video.title)
                 os.system("title "+self.video.title)
                 self.ytype = "VIDEO"
             except ValueError:
+                # Assuming the URL is not a video or a playlist, it falls outside of the scope of this program
+                # inform user, and classify the URL as "NONE"
                 print("This is not a youtube or other compatable url.")
                 self.ytype = "NONE"
         except OSError:
+            # self.parseUrl() was passed something that it could not parse
             print("I didn't understand that :C")
             self.ytype = "NONE"
 
@@ -228,26 +242,20 @@ class Main():
             elif opt == "--conf":
                 self.conf.showUI()
             else:
-                self.url = opt
-                self.parseUrl()
-                if self.ytype != "NONE":
-                    if self.ytype == "PLIST":
-                        print("playlists can take a long time to download. Please be patient...")
-                    self.download()
+                self.preDownload(opt)
+
+    def preDownload(self, url):
+        self.url = url
+        self.parseUrl()
+        if self.ytype != "NONE":
+            if self.ytype == "PLIST":
+                print("playlist can take a long time to download. Please be patient...")
+            self.download()
 
     def preProcess(self):
-        # Parse system arguments to decide which course of action to take
-        parser = argparse.ArgumentParser()
-
-        parser.add_argument("-u", "--url", help="Youtube URL to download video from. \n \
-                Passing this argument will cause the program to exit the the terminal\n \
-                when the task is completed", action="store")
-
-        args = parser.parse_args()
-
         # Make decisions based on args
         if args.url:
-            pass
+            self.preDownload(args.url)
         else:
             self.UI()
 
