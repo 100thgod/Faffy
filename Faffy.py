@@ -3,6 +3,9 @@
 import pafy, sys, os, shutil, argparse
 import urllib.request as urllib
 import lib.logger as logger
+
+from lib.faffyParent import FaffyParent
+
 from lib.config import Config
 from lib.dllib  import *
 from lib.cli    import *
@@ -13,83 +16,59 @@ LEGEND:
     "0" Old bug or feature not yet expressly fixed or implemented, but not sure if it is still relivent
     "X" Bug or feature that has been fixed or succesfully implemented
 
-0 Video Objects with a download method
+- Threading (More than one playlist at a time)
+- Threading (More than one Video in a playlist at the same time)
 - audio track only option
-0 Threading (More than one playlist at a time)
-0 Threading (More than one Video in a playlist at the same time)
-- Pretty Qt Interface
+- list of recently downloaded videos
+- video sort by channel
 - pause and resume downloads or even remove videos from the Q
 0 automatically ask about ^ when a playlist is longer than 20 videos even if not on manual but add a "Do not ask me this again!" Option
-0 if enough time passes in a download, it will freeze. Set a timeout and impliment resumable download to fix this
-X legalize does not filter commas, make it filter commas...
 - Program crashes if its download folder has been deleted or moved without rerouting the configuration
 - When configuring the download directory; if the program needs to create the directory, then it returns the current_dir+specified_dir
-X Maybe add configuration to control playlist video numbering, and whether or not to put playlists in there own folders
 X If the path is not supplied correctly in the configuration, eg: "C:/Test/foobar" <-- no slash on the end, the downloader will place the file in the wrong location and misname the file
 X Define a funcition to validate path format to prevent the filename and the path from being read incorrectly
 '''
-#DLLOC = "C:/Users/Michael/Videos/YouTube/"
+'''
+self.title
+self.clear
+self.
+'''
 
-class Main():
+class Main(FaffyParent):
     def __init__(self):
+        # Setup program configuration
         if sys.platform == "linux":
             self.conf = Config("settings_linux.conf")
         else:
             self.conf = Config()
         self.conf.load()
+
+        # Declare variables based on configuration
+        self.conf.data[0]['ver']="b1.0"
         self.url  = "URL"
         self.playlist = {}
         self.video = {}
         self.ytype = "NONE"
-        self.preProcess()
-
-    def title(self, text):
-        if sys.platform == "linux":
-            sys.stdout.write("\x1b]2;{0}\x07".format(text))
-        else:
-            os.system("title {0}".format(text))
-
-    def clear(self, override=False):
-        if not self.conf.data[0]["debug"] or override:
-            if sys.platform == "linux":
-                os.system("clear")
-            else:
-                os.system("cls")
-        
-    def legalize(self, x):
-        # *NEW* Easy How To Install Brutal Doom V19 With Extras 11/05/13
-        ILLEGAL= [['\u2665', ""], [" ","_"], [":", ""], ["/", "_"], ["\\", "_"], ["\"", "_"], ["?", ""], ["*", ""], ["|", "_"],[",", ""]]
-        for i in ILLEGAL:
-            x = x.replace(i[0], i[1])
-        return x
+        self.preProcess() 
 
     def callback(a=0, b=1, c=0, perf=0, status=0, _try=0, maxtry=0):
-        # Comment added to make function
-        print("\r ("+str(a)+"/"+str(b)+") "+str(math.floor(float(a/b)*100.0))+"% Attempt "+str(_try)+" of "+str(maxtry), end="\r")
+        # String template to be populated with download information
+        print("\r ("+str(a)+"/"+str(b)+") "+str(math.floor(float(a/b)*100.0))+"% Attempt "+str(_try)+" of "+str(maxtry), end="\r") 
 
-    def numberedFilename(self, x, filename):
-        if self.conf.data[0]["plvid#"]:
-            return str(x)+" - "+filename
+    def preProcess(self):
+        # Make decisions based on args
+        if args.url:
+            self.preDownload(args.url)
         else:
-            return filename
+            self.UI()
 
-    def ajust_end_value(self):
-        if self.conf.data[0]["limit"][1] == -1:
-            return None
-        else:
-            return self.conf.data[0]['limit'][-1]+1
-
-    def formatLocation(self):
-        x = self.conf.data[0]["dlloc"]
-        if x[-1] == "/":
-            return x
-        elif x[-1] == "\\":
-            return x
-        else:
-            if sys.platform == "linux":
-                return x+"/"
-            else:
-                return x+"\\"
+    def preDownload(self, url):
+        self.url = url
+        self.parseUrl()
+        if self.ytype != "NONE":
+            if self.ytype == "PLIST":
+                print("playlist can take a long time to download. Please be patient...")
+            self.download()
 
     def download(self):
         #print(self.ytype)
@@ -104,7 +83,7 @@ class Main():
             for video in self.playlist["items"][self.conf.data[0]['limit'][0]-1:self.ajust_end_value()]:
                 best = video['pafy'].getbest(preftype='mp4')
                 filename = self.legalize(best.title) + "." + best.extension
-                os.system("title "+str(x)+" of "+str(len(self.playlist["items"]))+" : "+best.title)
+                self.title("{start} of {end} : {title}".format(start=x, end=len(self.playlist["items"]), title=best.title))
                 print("=================================================================")
                 print("Downloading video "+str(x)+" of "+str(len(self.playlist["items"])))
                 print(best.title)
@@ -211,7 +190,7 @@ class Main():
                 # Assuming the url is not a playlist, declare the url as a video, and classify it as such
                 self.video = pafy.new(self.url)
                 #print(self.video.title)
-                os.system("title "+self.video.title)
+                self.title(self.video.title)
                 self.ytype = "VIDEO"
             except ValueError:
                 # Assuming the URL is not a video or a playlist, it falls outside of the scope of this program
@@ -243,22 +222,7 @@ class Main():
                 self.conf.showUI()
             else:
                 self.preDownload(opt)
-
-    def preDownload(self, url):
-        self.url = url
-        self.parseUrl()
-        if self.ytype != "NONE":
-            if self.ytype == "PLIST":
-                print("playlist can take a long time to download. Please be patient...")
-            self.download()
-
-    def preProcess(self):
-        # Make decisions based on args
-        if args.url:
-            self.preDownload(args.url)
-        else:
-            self.UI()
-
+    
     def help(self):
         print("================================================================")
         print("HOW TO DOWNLOAD!")
@@ -275,5 +239,29 @@ class Main():
         print("-q          : Exits the application...")
         print("--conf      : Displays the coniguration screen...")
         input("Press [ENTER] to continue...")
+
+    def numberedFilename(self, x, filename):
+        if self.conf.data[0]["plvid#"]:
+            return str(x)+" - "+filename
+        else:
+            return filename
+
+    def ajust_end_value(self):
+        if self.conf.data[0]["limit"][1] == -1:
+            return None
+        else:
+            return self.conf.data[0]['limit'][-1]+1
+
+    def formatLocation(self):
+        x = self.conf.data[0]["dlloc"]
+        if x[-1] == "/":
+            return x
+        elif x[-1] == "\\":
+            return x
+        else:
+            if sys.platform == "linux":
+                return x+"/"
+            else:
+                return x+"\\"
 
 main = Main()
