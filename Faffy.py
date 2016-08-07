@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 
-import pafy, sys, os, shutil, argparse
+import pafy, sys, os, shutil, argparse, getpass
 import urllib.request as urllib
 import lib.logger as logger
 
@@ -9,6 +9,7 @@ from lib.faffyParent import FaffyParent
 from lib.config import Config
 from lib.dllib  import *
 from lib.cli    import *
+from lib.com    import *
 
 '''
 LEGEND:
@@ -34,9 +35,15 @@ self.clear
 self.
 '''
 
+def dummy():
+    pass
+
 class Main(FaffyParent):
     def __init__(self):
         # Setup program configuration
+        
+        os.chdir("/home/{user}/Projects/Faffy".format(user=getpass.getuser()))
+
         if sys.platform == "linux":
             self.conf = Config("settings_linux.conf")
         else:
@@ -49,11 +56,66 @@ class Main(FaffyParent):
         self.playlist = {}
         self.video = {}
         self.ytype = "NONE"
+        self.logLineLimit = 5
+        self.emptyLnChar  = '~'
+        self.logList      = self.uiGenLogList()
         self.preProcess() 
+
+    def UI(self):
+        while 1:
+            self.clear()
+            self.title('Faffy Video Downloader: ver: '+ self.conf.data[0]["ver"])
+            
+            self.uiDrawBanner()
+            self.uiShowLog()
+            
+            try:
+                # But where is parseInput defined? lib.com along with the custom "BadArgument"
+                com = parseInput(self.uiGetInput())
+
+                if com.url:
+                    self.preDownload(com.url)
+
+                if com.dir:
+                    self.uiOut(os.getcwd())
+            
+                if com.conf:
+                    self.conf.showUI()
+
+                if com.q:
+                    self.clear()
+                    print("Just got: {0}".format(self.url))
+                    self.conf.save()
+                    sys.exit()
+
+            except BadArgument as e:
+                # If this exception is confusing check lib.com
+                self.uiOut(e)
 
     def callback(a=0, b=1, c=0, perf=0, status=0, _try=0, maxtry=0):
         # String template to be populated with download information
         print("\r ("+str(a)+"/"+str(b)+") "+str(math.floor(float(a/b)*100.0))+"% Attempt "+str(_try)+" of "+str(maxtry), end="\r") 
+
+    def uiGenLogList(self):
+        x = []
+        for i in range(0, self.logLineLimit):
+            x.append(self.emptyLnChar)
+        return x
+
+    def uiOut(self, i):
+        if len(self.logList) >= 5:
+            self.logList.pop(0)
+
+        self.logList.append(i)
+
+    def uiGetInput(self, func=dummy):
+        i = input(":>>")
+        self.uiOut(i)
+        return i
+
+    def uiShowLog(self):
+        for i in self.logList:
+            print(i)
 
     def preProcess(self):
         # Make decisions based on args
@@ -109,7 +171,7 @@ class Main(FaffyParent):
                         break
                     except FileNotFoundError as e:
                         print(e)
-                        self.conf._editlocation()
+                        self.conf._editLocation()
 
                 #urllib.urlretrieve(best.url, self.conf.data[0]["dlloc"]+self.legalize(self.playlist["title"])+"/"+filename, self.callback)
                 print()
@@ -201,27 +263,6 @@ class Main(FaffyParent):
             # self.parseUrl() was passed something that it could not parse
             print("I didn't understand that :C")
             self.ytype = "NONE"
-
-    def UI(self):
-        while 1:
-            self.clear()
-            self.title('Faffy Video Downloader: ver: '+ self.conf.data[0]["ver"])
-            print("============================================================")
-            print(" Faffy Video Downloader                                "+self.conf.data[0]["ver"])
-            print("============================================================")
-            print("Supply a URL or | For help type: --help | To quit type: -q")
-            opt = input(":>>")
-            if opt == "--help":
-                self.help()
-            elif opt == "-q":
-                self.clear()
-                print("Just got: {0}".format(self.url))
-                self.conf.save()
-                sys.exit()
-            elif opt == "--conf":
-                self.conf.showUI()
-            else:
-                self.preDownload(opt)
     
     def help(self):
         print("================================================================")
@@ -263,5 +304,11 @@ class Main(FaffyParent):
                 return x+"/"
             else:
                 return x+"\\"
+
+    def uiDrawBanner(self):
+        print("============================================================")
+        print(" Faffy Video Downloader                                "+self.conf.data[0]["ver"])
+        print("============================================================")
+        print("Supply a URL or | For help type: -help | To quit type: -q")
 
 main = Main()

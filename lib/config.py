@@ -21,6 +21,10 @@ class Config:
                 "maxRT"  : 5,        #the maximum number of times the download can be retried by the program before giving up and moving on
                 "iJson"  : False,
                 "debug"  : False
+            },
+            {
+                "history"    : ["~","~","~","~","~"],
+                "currentUrl" : ""
             }
         ]
         self.data    = []
@@ -28,7 +32,7 @@ class Config:
     def save(self):
         try:
             # EXCLUDE Values need: config set index, key of excluded value in config set
-            exclude = [[0,"limit"]]
+            exclude = [[0,"limit"], [0, "aOnly"]]
             for i in exclude:
                 self.data[i[0]][i[1]] = self.default[i[0]][i[1]]
 
@@ -154,6 +158,7 @@ class Config:
 
     def _editLocation(self):
         while True:
+            print("Current: \"{dir}\"".format(dir=self.data[0]["dlloc"]))
             print("Where should I save videos? Type \"skip\" to leave without saving...")
             x = input(":>> ") 
             if x != "skip":
